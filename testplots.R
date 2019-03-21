@@ -1,15 +1,34 @@
 #test plots
-
 library(ggplot2)
 library(data.table)
 
-
-#tracks_2017$month<-as.factor(tracks_2017$month)
-#tracks_2017$month_f = factor(tracks_2017$month, levels=c("Jan","Feb","Mar","Apr","May","Jun","Jul""Aug","Sep","Oct","Nov","Dec"))
+tracks2017<-fread(paste(getwd(),"/data/tracks2017.csv",sep=""))
+tracks2017[Length == 0, "Length"] <-NA 
+tracks2017<-tracks2017[,`:=`(month=format(as.Date(TrckStr, '%m/%d/%Y'),'%m'))]
 
 #vessel_types<-c("Not Available","Other","Cargo","Tanker","Tug Tow","Passenger","Fishing","Pleasure Craft/Sailing")
 
-tracks_2017<-tracks_2017[,`:=`(month_=format(TrckStr,'%m'))]
+tracks2017.summary<-tracks2017[,.(count = .N, avg.length = mean(Length, na.rm=T), unique.vessels = length(unique(MMSI)), avg.track.length = mean(Shp_Lng)), by="vssl_gr"]
+
+tracks2017.summary.month<-tracks2017[,.(count = .N, avg.length = mean(Length, na.rm=T), unique.vessels = length(unique(MMSI)), avg.track.length = mean(Shp_Lng)), by=c("vssl_gr","month")]
+
+
+#unique vessel counts by vessel type
+tracks2017.pcSail<-tracks2017[vssl_gr == "Pleasure Craft/Sailing", .(count = .N, avg.length = mean(Length, na.rm=T), avg.track.length = mean(Shp_Lng)), by= c("VesslNm","shp_cr_","MMSI")]
+
+tracks2017.fishing<-tracks2017[vssl_gr == "Fishing", .(count = .N, avg.length = mean(Length, na.rm=T), avg.track.length = mean(Shp_Lng)), by= c("VesslNm","shp_cr_","MMSI")]
+
+tracks2017.passenger<-tracks2017[vssl_gr == "Passenger", .(count = .N, avg.length = mean(Length, na.rm=T), avg.track.length = mean(Shp_Lng)), by= c("VesslNm","shp_cr_","MMSI")]
+
+tracks2017.other<-tracks2017[vssl_gr == "Other", .(count = .N, avg.length = mean(Length, na.rm=T), avg.track.length = mean(Shp_Lng)), by= c("VesslNm","shp_cr_","MMSI")]
+
+tracks2017.cargo<-tracks2017[vssl_gr == "Cargo", .(count = .N, avg.length = mean(Length, na.rm=T), avg.track.length = mean(Shp_Lng)), by= c("VesslNm","shp_cr_","MMSI")]
+
+tracks2017.tanker<-tracks2017[vssl_gr == "Tanker", .(count = .N, avg.length = mean(Length, na.rm=T), avg.track.length = mean(Shp_Lng)), by= c("VesslNm","shp_cr_","MMSI")]
+
+tracks2017.tug<-tracks2017[vssl_gr == "Tug Tow", .(count = .N, avg.length = mean(Length, na.rm=T), avg.track.length = mean(Shp_Lng)), by= c("VesslNm","shp_cr_","MMSI")]
+
+
 
 ggplot()+
   geom_bar(data=tracks_2017,aes(x=vssl_gr))+
