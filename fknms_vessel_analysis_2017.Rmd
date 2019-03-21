@@ -1,0 +1,167 @@
+---
+title: "Vessel Traffic Data Analysis"
+author: "Shannon Ricci"
+date: "3/21/2019"
+output: html_document
+---
+
+## Project Description
+
+
+
+## Vessel Traffic Data Preparation
+Vessel traffic data was downloaded from <https://marinecadastre.gov/ais/> on 3/1/2019 for Zone 17 in year 2017. The area of interest for this analysis is the area surrounding the lower Florida Keys, USA which includes several MPAs in the Florida Keys National Marine Sanctuary. The original AIS data will be filtered to include just points within the bounds of the AOI. These csv files will then be used to convert the point data into track lines using the Marine Cadastre Track Builder Tool for ArcPro.
+
+```{r filter.AIS }
+library(data.table)
+#ran out of memory when tried to do this in a loop. Manually filter and save to csv for AIS data by month.
+
+ais.filelist<-list.files("/Users/sbrown/Documents/research/vesseltraffic", pattern=glob2rx("*AIS*.csv$"), full.names = T)
+  
+ais.zone17.jan2017<-fread(ais.filelist[1])
+ais.zone17.jan2017<-ais.zone17.jan2017[LAT %between% c(24.25,24.75) & LON %between% c(-82.75, -80.75),]
+write.csv(ais.zone17.jan2017,"ais_fknms_jan2017.csv")
+
+ais.zone17.feb2017<-fread(ais.filelist[2])
+ais.zone17.feb2017<-ais.zone17.feb2017[LAT %between% c(24.25,24.75) & LON %between% c(-82.75, -80.75),]
+write.csv(ais.zone17.feb2017,"ais_fknms_feb2017.csv")
+
+ais.zone17.mar2017<-fread(ais.filelist[3])
+ais.zone17.mar2017<-ais.zone17.mar2017[LAT %between% c(24.25,24.75) & LON %between% c(-82.75, -80.75),]
+write.csv(ais.zone17.mar2017,"ais_fknms_mar2017.csv")
+
+ais.zone17.apr2017<-fread(ais.filelist[4])
+ais.zone17.apr2017<-ais.zone17.apr2017[LAT %between% c(24.25,24.75) & LON %between% c(-82.75, -80.75),]
+write.csv(ais.zone17.apr2017,"ais_fknms_apr2017.csv")
+
+ais.zone17.may2017<-fread(ais.filelist[5])
+ais.zone17.may2017<-ais.zone17.may2017[LAT %between% c(24.25,24.75) & LON %between% c(-82.75, -80.75),]
+write.csv(ais.zone17.may2017,"ais_fknms_may2017.csv")
+
+ais.zone17.jun2017<-fread(ais.filelist[6])
+ais.zone17.jun2017<-ais.zone17.jun2017[LAT %between% c(24.25,24.75) & LON %between% c(-82.75, -80.75),]
+write.csv(ais.zone17.jun2017,"ais_fknms_jun2017.csv")
+
+ais.zone17.jul2017<-fread(ais.filelist[7])
+ais.zone17.jul2017<-ais.zone17.jul2017[LAT %between% c(24.25,24.75) & LON %between% c(-82.75, -80.75),]
+write.csv(ais.zone17.jul2017,"ais_fknms_jul2017.csv")
+
+ais.zone17.aug2017<-fread(ais.filelist[8])
+ais.zone17.aug2017<-ais.zone17.aug2017[LAT %between% c(24.25,24.75) & LON %between% c(-82.75, -80.75),]
+write.csv(ais.zone17.aug2017,"ais_fknms_aug2017.csv")
+
+ais.zone17.sep2017<-fread(ais.filelist[9])
+ais.zone17.sep2017<-ais.zone17.sep2017[LAT %between% c(24.25,24.75) & LON %between% c(-82.75, -80.75),]
+write.csv(ais.zone17.sep2017,"ais_fknms_sep2017.csv")
+
+ais.zone17.oct2017<-fread(ais.filelist[10])
+ais.zone17.oct2017<-ais.zone17.oct2017[LAT %between% c(24.25,24.75) & LON %between% c(-82.75, -80.75),]
+write.csv(ais.zone17.oct2017,"ais_fknms_oct2017.csv")
+
+ais.zone17.nov2017<-fread(ais.filelist[11])
+ais.zone17.nov2017<-ais.zone17.nov2017[LAT %between% c(24.25,24.75) & LON %between% c(-82.75, -80.75),]
+write.csv(ais.zone17.nov2017,"ais_fknms_nov2017.csv")
+
+ais.zone17.dec2017<-fread(ais.filelist[12])
+ais.zone17.dec2017<-ais.zone17.dec2017[LAT %between% c(24.25,24.75) & LON %between% c(-82.75, -80.75),]
+write.csv(ais.zone17.dec2017,"ais_fknms_dec2017.csv")
+
+```
+
+## Add Vessel Type based on Vessel Codes
+Was unable to use the join tool in Arc Pro to merge vessel codes with the vessel type description. After creating tracks from the point csv files in Arc Pro (using the Track Builder tool), the shape files for the track lines for each month were exported. In this next step, the shapefiles are loaded into R, and then vessel types are added to the shapefiles based on vessel code.
+
+```{r process.tracks.func, warning=FALSE}
+
+process.tracks<-function(track.file,vessel.codes,output.name){
+  tracks_tmp<-st_read(track.file)
+  tracks_coded<-merge(tracks_tmp,vessel.codes,by.x="VesselType",by.y="vessel_code")
+  tracks_coded$MMSI<-as.character(tracks_coded$MMSI)
+  setwd("C:/Users/swbrown/Documents/vessel_noise_project/vessel_analysis/tracks_fknms_2017_coded")
+  st_write(tracks_coded,output.name)
+  
+  
+  tracks_dt<-as.data.table(tracks_coded)
+  tracks_dt[Length==0,"Length"]<-NA #set vessel lengths of 0 to NA
+  
+  tracks_summary<-tracks_dt[,.(count=.N, avg.length=mean(Length,na.rm=T)),by="vessel_group"]
+  tracks_unique<-tracks_dt[,.(count=.N),by=c("MMSI","vessel_group","VesselName")][order(-count),]
+  
+  result<-list(tracks_summary=tracks_summary,tracks_unique=tracks_unique)
+  return(result)
+
+}
+
+```
+
+```{r code.tracks, warning=FALSE}
+library(sf)
+library(data.table)
+library(ggplot2)
+
+vessel.codes<-fread("C:/Users/swbrown/Documents/vessel_noise_project/vessel_analysis/VesselTypeCodes2018.csv")
+
+#setwd("C:/Users/swbrown/Documents/vessel_noise_project/vessel_analysis/tracks_fknms_2017_coded")
+
+#jan2017
+track.file="C:/Users/swbrown/Documents/vessel_noise_project/vessel_analysis/tracks_fknms_2017/tracks_fknms_jan2017.shp"
+output.name="tracks_jan2017c.shp"
+tracks_jan2017<-process.tracks(track.file,vessel.codes,output.name)
+
+#feb2017
+track.file="C:/Users/swbrown/Documents/vessel_noise_project/vessel_analysis/tracks_fknms_2017/tracks_fknms_feb2017.shp"
+output.name="tracks_feb2017c.shp"
+tracks_feb2017<-process.tracks(track.file,vessel.codes,output.name)
+
+#mar2017
+track.file="C:/Users/swbrown/Documents/vessel_noise_project/vessel_analysis/tracks_fknms_2017/tracks_fknms_mar2017.shp"
+output.name="tracks_mar2017c.shp"
+tracks_mar2017<-process.tracks(track.file,vessel.codes,output.name)
+
+#apr2017
+track.file="C:/Users/swbrown/Documents/vessel_noise_project/vessel_analysis/tracks_fknms_2017/tracks_fknms_apr2017.shp"
+output.name="tracks_apr2017c.shp"
+tracks_apr2017<-process.tracks(track.file,vessel.codes,output.name)
+
+#may2017
+track.file="C:/Users/swbrown/Documents/vessel_noise_project/vessel_analysis/tracks_fknms_2017/tracks_fknms_may2017.shp"
+output.name="tracks_may2017c.shp"
+tracks_may2017<-process.tracks(track.file,vessel.codes,output.name)
+
+#jun2017
+track.file="C:/Users/swbrown/Documents/vessel_noise_project/vessel_analysis/tracks_fknms_2017/tracks_fknms_jun2017.shp"
+output.name="tracks_jun2017c.shp"
+tracks_jun2017<-process.tracks(track.file,vessel.codes,output.name)
+
+#jul2017
+track.file="C:/Users/swbrown/Documents/vessel_noise_project/vessel_analysis/tracks_fknms_2017/tracks_fknms_jul2017.shp"
+output.name="tracks_jul2017c.shp"
+tracks_jul2017<-process.tracks(track.file,vessel.codes,output.name)
+
+#aug2017
+track.file="C:/Users/swbrown/Documents/vessel_noise_project/vessel_analysis/tracks_fknms_2017/tracks_fknms_aug2017.shp"
+output.name="tracks_aug2017c.shp"
+tracks_aug2017<-process.tracks(track.file,vessel.codes,output.name)
+
+#sep2017
+track.file="C:/Users/swbrown/Documents/vessel_noise_project/vessel_analysis/tracks_fknms_2017/tracks_fknms_sep2017.shp"
+output.name="tracks_sep2017c.shp"
+tracks_sep2017<-process.tracks(track.file,vessel.codes,output.name)
+
+#oct2017
+track.file="C:/Users/swbrown/Documents/vessel_noise_project/vessel_analysis/tracks_fknms_2017/tracks_fknms_oct2017.shp"
+output.name="tracks_oct2017c.shp"
+tracks_oct2017<-process.tracks(track.file,vessel.codes,output.name)
+
+#nov2017
+track.file="C:/Users/swbrown/Documents/vessel_noise_project/vessel_analysis/tracks_fknms_2017/tracks_fknms_nov2017.shp"
+output.name="tracks_nov2017c.shp"
+tracks_nov2017<-process.tracks(track.file,vessel.codes,output.name)
+
+#dec2017
+track.file="C:/Users/swbrown/Documents/vessel_noise_project/vessel_analysis/tracks_fknms_2017/tracks_fknms_dec2017.shp"
+output.name="tracks_dec2017c.shp"
+tracks_dec2017<-process.tracks(track.file,vessel.codes,output.name)
+
+
+```
