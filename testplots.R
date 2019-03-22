@@ -14,17 +14,17 @@ tracks2017.summary.month<-tracks2017[,.(count = .N, avg.length = mean(Length, na
 
 
 #unique vessel counts by vessel type
-tracks2017.pcSail<-tracks2017[vssl_gr == "Pleasure Craft/Sailing", .(count = .N, avg.length = mean(Length, na.rm=T), avg.track.length = mean(Shp_Lng)), by= c("VesslNm","shp_cr_","MMSI")]
+tracks2017.pcSail<-tracks2017[vssl_gr == "Pleasure Craft/Sailing", .(count = .N, avg.length = mean(Length, na.rm=T), draft = mean(Draft), speed = mean(SOG), avg.track.length = mean(Shp_Lng)), by= c("VesslNm","shp_cr_","MMSI")]
 
 tracks2017.fishing<-tracks2017[vssl_gr == "Fishing", .(count = .N, avg.length = mean(Length, na.rm=T), avg.track.length = mean(Shp_Lng)), by= c("VesslNm","shp_cr_","MMSI")]
 
-tracks2017.passenger<-tracks2017[vssl_gr == "Passenger", .(count = .N, avg.length = mean(Length, na.rm=T), avg.track.length = mean(Shp_Lng)), by= c("VesslNm","shp_cr_","MMSI")]
+tracks2017.passenger<-tracks2017[vssl_gr == "Passenger", .(count = .N, avg.length = mean(Length, na.rm=T), draft = mean(Draft), speed = mean(SOG), avg.track.length = mean(Shp_Lng)), by= c("VesslNm","shp_cr_","MMSI")]
 
 tracks2017.other<-tracks2017[vssl_gr == "Other", .(count = .N, avg.length = mean(Length, na.rm=T), avg.track.length = mean(Shp_Lng)), by= c("VesslNm","shp_cr_","MMSI")]
 
-tracks2017.cargo<-tracks2017[vssl_gr == "Cargo", .(count = .N, avg.length = mean(Length, na.rm=T), avg.track.length = mean(Shp_Lng)), by= c("VesslNm","shp_cr_","MMSI")]
+tracks2017.cargo<-tracks2017[vssl_gr == "Cargo", .(count = .N, avg.length = mean(Length, na.rm=T), draft = mean(Draft), speed = mean(SOG),avg.track.length = mean(Shp_Lng)), by= c("VesslNm","shp_cr_","MMSI")]
 
-tracks2017.tanker<-tracks2017[vssl_gr == "Tanker", .(count = .N, avg.length = mean(Length, na.rm=T), avg.track.length = mean(Shp_Lng)), by= c("VesslNm","shp_cr_","MMSI")]
+tracks2017.tanker<-tracks2017[vssl_gr == "Tanker", .(count = .N, avg.length = mean(Length, na.rm=T), draft = mean(Draft), speed = mean(SOG), avg.track.length = mean(Shp_Lng)), by= c("VesslNm","shp_cr_","MMSI")]
 
 tracks2017.tug<-tracks2017[vssl_gr == "Tug Tow", .(count = .N, avg.length = mean(Length, na.rm=T), avg.track.length = mean(Shp_Lng)), by= c("VesslNm","shp_cr_","MMSI")]
 
