@@ -8,7 +8,7 @@ tracks2017<-tracks2017[,`:=`(month=format(as.Date(TrckStr, '%m/%d/%Y'),'%m'))]
 
 #vessel_types<-c("Not Available","Other","Cargo","Tanker","Tug Tow","Passenger","Fishing","Pleasure Craft/Sailing")
 
-tracks2017.summary<-tracks2017[,.(count = .N, avg.length = mean(Length, na.rm=T), unique.vessels = length(unique(MMSI)), avg.track.length = mean(Shp_Lng)), by="vssl_gr"]
+tracks2017.summary<-tracks2017[,.(count = .N, avg.length = mean(Length, na.rm=T), unique.vessels = length(unique(MMSI)), avg.speed = mean(SOG), median.speed  = median(SOG), avg.track.length = mean(Shp_Lng)), by="vssl_gr"]
 
 tracks2017.summary.month<-tracks2017[,.(count = .N, avg.length = mean(Length, na.rm=T), unique.vessels = length(unique(MMSI)), avg.track.length = mean(Shp_Lng)), by=c("vssl_gr","month")]
 
@@ -56,3 +56,5 @@ ggplot()+
   geom_bar(data=tracks_2017,aes(x=month_,fill=vssl_gr),position = "fill")+
   scale_fill_brewer(palette="Dark2")+
   theme_classic()
+
+ggplot(tracks2017)+geom_histogram(aes(x=SOG))+facet_wrap(.~vssl_gr)
