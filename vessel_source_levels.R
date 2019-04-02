@@ -1,9 +1,48 @@
 #adapting and working with code from Viers et al 2016 vessel noise paper
+library(data.table)
+library(pracma)
 
-load("df_ALL_quant_linear_SL.Rdata")
+load("data/vessel_SL/df_ALL_quant_linear_SL.Rdata")
 
 dt_vessel_SL<-data.table(df_ALL_quant_linear_SL)
 
+
+#interpolate SL at octave frequencies for dBSea input
+library(pracma)
+fcenter  <- 10^3 * (2 ^ (seq(-14,17,1)/3))
+fcenter_dBsea <- 10^3 * (2 ^ (seq(-18,22,1)/3))
+
+tug<-dt_vessel_SL[class == "Tug", .(q50.avg = mean(q50)),by=fhz]
+tug_octave<-interp1(tug$fhz,tug$q50.avg,fcenter)
+#tug_octave<-rbind(fcenter,tug_octave)
+
+cargo<-dt_vessel_SL[class == "Cargo", .(q50.avg = mean(q50)),by=fhz]
+cargo_octave<-interp1(cargo$fhz,cargo$q50.avg,fcenter)
+#cargo_octave<-rbind(fcenter, cargo_octave)
+
+tanker<-dt_vessel_SL[class == "Tanker", .(q50.avg = mean(q50)),by=fhz]
+tanker_octave<-interp1(tanker$fhz,tanker$q50.avg,fcenter)
+#tanker_octave<-rbind(fcenter, tanker_octave)
+
+passenger<-dt_vessel_SL[class == "Passenger", .(q50.avg = mean(q50)),by=fhz]
+passenger_octave<-interp1(passenger$fhz,passenger$q50.avg,fcenter)
+#passenger_octave<-rbind(fcenter, passenger_octave)
+
+fishing<-dt_vessel_SL[class == "Fishing", .(q50.avg = mean(q50)),by=fhz]
+fishing_octave<-interp1(fishing$fhz,fishing$q50.avg,fcenter)
+#fishing_octave<-rbind(fcenter, fishing_octave)
+
+pleasure_craft<-dt_vessel_SL[class == "Pleasure craft", .(q50.avg = mean(q50)),by=fhz]
+pleasure_craft_octave<-interp1(pleasure_craft$fhz,pleasure_craft$q50.avg,fcenter)
+#pleasure_craft_octave<-rbind(fcenter, pleasure_craft_octave)
+
+vessel_type_SL<-data.frame(pleasure_craft_octave,fishing_octave,passenger_octave,tanker_octave,cargo_octave,tug_octave)
+vessel_type_SL<-t(vessel_type_SL)
+
+write.csv(vessel_type_SL,file = "vessel_type_SL.csv",row.names = T, quote = F)
+
+
+#plotting from Viers et al
 v_list_July_22=c("Container","Bulk carrier","Vehicle carrier","Cargo","Tanker","Passenger","Tug","Military","Fishing","Pleasure craft","Research","Miscellaneous")
 
 plotcolors <- rainbow(length(v_list_July_22))
@@ -66,6 +105,8 @@ fcenter  <- 10^3 * (2 ^ (seq(-14,17,1)/3))
 
 tug<-dt_vessel_SL[class == "Tug", .(q50.avg = mean(q50)),by=fhz]
 tug_octave<-interp1(tug$fhz,tug$q50.avg,fcenter)
+tug_octave<-rbind(fcenter,tug_octave)
+
 
 
 fcenter_dBsea <- 10^3 * (2 ^ (seq(-18,22,1)/3))
