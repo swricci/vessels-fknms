@@ -1,10 +1,43 @@
+library(data.table)
+library(sf)
+library(ggplot2)
+
+#track points from ArcPro - equal distance along original track line, set to 1km with starting point.
+#find the time it takes to go that distance if vessel was traveling at average speed in m/s, time is in sec
+
+satori_track2_pts_dt<-fread("C:/Users/sbrown/Documents/dBSea_fknms/satori_track2_eqpts.csv")
+satori_track2_pts<-st_as_sf(satori_track2_pts,coords=c('POINT_X','POINT_Y'), crs= "+init=epsg:4269")
+satori_track2_utm<-st_transform(satori_track2_pts, 26917) #convert to UTM for dBSea
+#plot(satori_track2_pts)
+
+satori_speed<-5.35 #m/s, originally 10.4 knots
+
+satori_dist<-rep(NA,42)
+for (i in seq(from=1, to=42-1,by= 1)){
+  satori_dist[i+1]<-st_distance(satori_track2_pts[i+1,],satori_track2_pts[i,])
+}
+satori_dist[1]<-0
+
+satori_time<-rep(NA,42)
+for (i in seq(from=1, to=42-1,by= 1)){
+  satori_time[i+1]<-satori_dist[i+1]/satori_speed
+}
+satori_time[1]<-0
+
+satori_track2<-data.table(st_coordinates(satori_track2_utm),satori_time)
+colnames(satori_track2)<-c("Easting","Northing", "Time")
+write.csv(satori_track2,"C:/Users/sbrown/Documents/dBSea_fknms/satori_track2.csv",row.names = F, quote = F)
+
+
+
+
+
+###OLD CODE BELOW###
 #take two points find the distance  then divide by time difference
 # plot this
 # get representative velocity (median/mean if relatively constant, if there is a drop then determine what the speed would be if it was moving at constant rate)
 
-library(data.table)
-library(sf)
-library(ggplot2)
+
 
 #get directory for track shapefiles
 tracks.dir<-"C:/Users/sbrown/Documents/ArcGIS/Projects/vesselNoise/selected_tracks_bytype"
