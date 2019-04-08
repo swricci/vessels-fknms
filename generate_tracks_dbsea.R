@@ -6,20 +6,20 @@ library(ggplot2)
 #find the time it takes to go that distance if vessel was traveling at average speed in m/s, time is in sec
 
 satori_track2_pts_dt<-fread("C:/Users/sbrown/Documents/dBSea_fknms/satori_track2_eqpts.csv")
-satori_track2_pts<-st_as_sf(satori_track2_pts,coords=c('POINT_X','POINT_Y'), crs= "+init=epsg:4269")
+satori_track2_pts<-st_as_sf(satori_track2_pts_dt,coords=c('POINT_X','POINT_Y'), crs= "+init=epsg:4269")
 satori_track2_utm<-st_transform(satori_track2_pts, 26917) #convert to UTM for dBSea
 #plot(satori_track2_pts)
 
 satori_speed<-5.35 #m/s, originally 10.4 knots
 
-satori_dist<-rep(NA,42)
-for (i in seq(from=1, to=42-1,by= 1)){
+satori_dist<-rep(NA,length(satori_track2_pts$OBJECTID))
+for (i in seq(from=1, to=length(satori_track2_pts$OBJECTID)-1,by= 1)){
   satori_dist[i+1]<-st_distance(satori_track2_pts[i+1,],satori_track2_pts[i,])
 }
 satori_dist[1]<-0
 
-satori_time<-rep(NA,42)
-for (i in seq(from=1, to=42-1,by= 1)){
+satori_time<-rep(NA,length(satori_track2_pts$OBJECTID))
+for (i in seq(from=1, to=length(satori_track2_pts$OBJECTID)-1,by= 1)){
   satori_time[i+1]<-satori_dist[i+1]/satori_speed
 }
 satori_time[1]<-0
@@ -28,6 +28,30 @@ satori_track2<-data.table(st_coordinates(satori_track2_utm),satori_time)
 colnames(satori_track2)<-c("Easting","Northing", "Time")
 write.csv(satori_track2,"C:/Users/sbrown/Documents/dBSea_fknms/satori_track2.csv",row.names = F, quote = F)
 
+
+cargo_maerskmemphis<-fread("C:/Users/sbrown/Documents/dBSea_fknms/cargo_maersk_track.csv")
+
+cargo_maerskmemphis<-st_as_sf(cargo_maerskmemphis,coords=c('POINT_X','POINT_Y'), crs= "+init=epsg:4269")
+
+cargo_maerskmemphis_utm<-st_transform(cargo_maerskmemphis, 26917) #convert to UTM for dBSea
+
+cargo_maerskmemphis_speed<-7.27 #m/s, originally 14.13 knots type average
+
+cargo_maerskmemphis_dist<-rep(NA,length(cargo_maerskmemphis$OBJECTID))
+for (i in seq(from=1, to=length(cargo_maerskmemphis$OBJECTID)-1,by= 1)){
+  cargo_maerskmemphis_dist[i+1]<-st_distance(cargo_maerskmemphis[i+1,],cargo_maerskmemphis[i,])
+}
+cargo_maerskmemphis_dist[1]<-0
+
+cargo_maerskmemphis_time<-rep(NA,length(cargo_maerskmemphis$OBJECTID))
+for (i in seq(from=1, to=length(cargo_maerskmemphis$OBJECTID)-1,by= 1)){
+  cargo_maerskmemphis_time[i+1]<-cargo_maerskmemphis_dist[i+1]/cargo_maerskmemphis_speed
+}
+cargo_maerskmemphis_time[1]<-0
+
+cargo_maerskmemphis_track<-data.table(st_coordinates(cargo_maerskmemphis_utm),cargo_maerskmemphis_time)
+colnames(cargo_maerskmemphis_track)<-c("Easting","Northing", "Time")
+write.csv(cargo_maerskmemphis_track,"C:/Users/sbrown/Documents/dBSea_fknms/cargo_maerskmemphis_track.csv",row.names = F, quote = F)
 
 
 
