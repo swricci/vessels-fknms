@@ -163,6 +163,53 @@ track.file="C:/Users/swbrown/Documents/vessel_noise_project/vessel_analysis/trac
 output.name="tracks_dec2017c.shp"
 tracks_dec2017<-process.tracks(track.file,vessel.codes,output.name)
 
+```
+
+
+Track lines from each vessel category that best represented areas of high activity for that vessel category were extracted. In ArcPro, points were generated along each of these track lines spaced 1 km apart. Those points were exported from ArcPro as csv files so that we can generate the time between each of those points based on average vessel speed. The following function accomplishes this task. The final output is a csv file with point position information (in UTM), the depth of that source point, time between the two points, and the number of sections. This is the format and data required to import a moving source line into dBSea.
+```{r generate.tracks.function}
+generate.tracks<-function(point.file,speed,draft,output.name){
+  track.points<-fread(point.file)
+  track.points<-st_as_sf(track.points,coords = c('POINT_X','POINT_Y'), crs= "+init=epsg:32617")
+  
+  point.dist<-rep(NA,length(track.points$OBJECTID))
+  for (i in seq(from=1, to=length(track.points$OBJECTID)-1,by= 1)){
+    point.dist[i+1]<-st_distance(track.points[i+1,],track.points[i,])
+  }
+  point.dist[1]<-0
+  
+  point.time<-rep(NA,length(track.points$OBJECTID))
+  for (i in seq(from=1, to=length(track.points$OBJECTID)-1,by= 1)){
+    point.time[i+1]<-point.dist[i+1]/speed
+  }
+  point.time[1]<-0
+  
+  depth<-rep(draft,length(point.dist))
+  sections<-rep(0,length(point.dist))
+  
+  tmp.track<-data.table(st_coordinates(track.points),depth,point.time,sections)
+  colnames(tmp.track)<-c("Easting","Northing","Depth","Time","Sections")
+  
+  write.csv(tmp.track,output.name,row.names = F, quote = F)
+}
+
+```
+
+```{r generate.tracks}
+library(data.table)
+library(sf)
+
+#set vessel specific parameters:
+# speed <- #in m/s
+# draft <- #in m
+# output.name<- #path with .csv file name
+
+
+
+
+
+
+
 
 ```
 
