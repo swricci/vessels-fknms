@@ -204,11 +204,70 @@ library(sf)
 # draft <- #in m
 # output.name<- #path with .csv file name
 
+#pcsail satori
+file<-"C:/Users/sbrown/Documents/dBSea_fknms/tracks_dbsea/pcsail_satori.csv"
+output.name<-"C:/Users/sbrown/Documents/dBSea_fknms/tracks_dbsea/pcsail_satori_track.csv"
+generate.tracks(file,5.35,1,output.name) #speed is vessel cat average
 
+#pcsail pelican
+file<-"C:/Users/sbrown/Documents/dBSea_fknms/tracks_dbsea/pcsail_pelican.csv"
+output.name<-"C:/Users/sbrown/Documents/dBSea_fknms/tracks_dbsea/pcsail_pelican_track.csv"
+generate.tracks(file,3.02,1,output.name)
 
+#pcsail blue pearl
+file<-"C:/Users/sbrown/Documents/dBSea_fknms/tracks_dbsea/pcsail_bluepearl.csv"
+output.name<-"C:/Users/sbrown/Documents/dBSea_fknms/tracks_dbsea/pcsail_bluepearl_track.csv"
+generate.tracks(file,5.35,1,output.name) #speed is vessel cat average
 
+#fishing stimstar near
+file<-"C:/Users/sbrown/Documents/dBSea_fknms/tracks_dbsea/fishing_stimstar_near.csv"
+output.name<-"C:/Users/sbrown/Documents/dBSea_fknms/tracks_dbsea/fishing_stimstar_near_track.csv"
+generate.tracks(file,12.86,1.5,output.name)
 
+#fishing stimstar far
+file<-"C:/Users/sbrown/Documents/dBSea_fknms/tracks_dbsea/fishing_stimstar_far.csv"
+output.name<-"C:/Users/sbrown/Documents/dBSea_fknms/tracks_dbsea/fishing_stimstar_far_track.csv"
+generate.tracks(file,12.86,1.5,output.name)
 
+#fishing big daddy
+file<-"C:/Users/sbrown/Documents/dBSea_fknms/tracks_dbsea/fishing_bigdaddy.csv"
+output.name<-"C:/Users/sbrown/Documents/dBSea_fknms/tracks_dbsea/fishing_bigdaddy_track.csv"
+generate.tracks(file,3.85,1.5,output.name)
+
+#passenger capt blinky
+file<-"C:/Users/sbrown/Documents/dBSea_fknms/tracks_dbsea/passenger_captblinky.csv"
+output.name<-"C:/Users/sbrown/Documents/dBSea_fknms/tracks_dbsea/passenger_captblinky_track.csv"
+generate.tracks(file,5.6,1,output.name)
+
+#passenger empress of the seas
+file<-"C:/Users/sbrown/Documents/dBSea_fknms/tracks_dbsea/passenger_empressoftheseas.csv"
+output.name<-"C:/Users/sbrown/Documents/dBSea_fknms/tracks_dbsea/passenger_empressoftheseas_track.csv"
+generate.tracks(file,6.36,7.1,output.name)
+
+#passenger grand nellie (sailing)
+file<-"C:/Users/sbrown/Documents/dBSea_fknms/tracks_dbsea/passenger_grandnellie.csv"
+output.name<-"C:/Users/sbrown/Documents/dBSea_fknms/tracks_dbsea/passenger_grandnellie_track.csv"
+generate.tracks(file,2.67,1,output.name)
+
+#passenger yankee freedom iii
+file<-"C:/Users/sbrown/Documents/dBSea_fknms/tracks_dbsea/passenger_yankeefreedom.csv"
+output.name<-"C:/Users/sbrown/Documents/dBSea_fknms/tracks_dbsea/passenger_yankeefreedom_track.csv"
+generate.tracks(file,12.65,2,output.name)
+
+#tank overseas new york
+file<-"C:/Users/sbrown/Documents/dBSea_fknms/tracks_dbsea/tank_overseasnewyork.csv"
+output.name<-"C:/Users/sbrown/Documents/dBSea_fknms/tracks_dbsea/tank_overseasnewyork_track.csv"
+generate.tracks(file,7.77,12.2,output.name)
+
+#tug genesis patriot
+file<-"C:/Users/sbrown/Documents/dBSea_fknms/tracks_dbsea/tug_genesispatriot.csv"
+output.name<-"C:/Users/sbrown/Documents/dBSea_fknms/tracks_dbsea/tug_genesispatriot_track.csv"
+generate.tracks(file,4.32,5.1,output.name)
+
+#tug kirsten grace
+file<-"C:/Users/sbrown/Documents/dBSea_fknms/tracks_dbsea/tug_kirstengrace.csv"
+output.name<-"C:/Users/sbrown/Documents/dBSea_fknms/tracks_dbsea/tug_kirstengrace_track.csv"
+generate.tracks(file,4.6,3,output.name) #speed is vessel cat average
 
 
 ```
