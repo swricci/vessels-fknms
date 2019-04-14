@@ -277,6 +277,7 @@ The following code produced: a csv file that was used to load source level infor
 ```{r, eval = F}
 library(data.table)
 library(pracma)
+library(scales)
 
 load("data/vessel_SL/df_ALL_quant_linear_SL.Rdata")
 
@@ -319,20 +320,24 @@ vessel_type_SL_octave<-data.frame(pleasure_craft_octave,fishing_octave,passenger
 
 vessel_type_SL<-dt_vessel_SL[class == "Tug" | class == "Pleasure craft" | class == "Fishing" | class == "Passenger" | class == "Cargo" | class == "Fishing" | class == "Tanker", .(q50.avg = mean(q50)),by=c("class","fhz")]
 
+vessel_order<-c("Tanker","Cargo","Passenger","Tug","Fishing","Pleasure craft")
+
+vessel_type_SL$class2<-factor(vessel_type_SL$class, levels = vessel_order)
+
 SL_vessel_type_fig<-ggplot(vessel_type_SL)+
   scale_x_log10(breaks=c(10,100,1000,10000,100000),labels = trans_format("log10", math_format(10^.x)),lim=c(20,100000)) +
   annotation_logticks(sides = "tb") +
-  geom_line(aes(x=fhz,y=q50.avg, group = class, color = class), size = 1) +##, linetype=class)) +
+  geom_line(aes(x=fhz,y=q50.avg, group = class2, color = class2), size = 1) +##, linetype=class)) +
   # geom_smooth(aes(x=fhz,y=q50, group=class, color=class),se=FALSE,method = "loess", formula = y ~ x, degree=2, span=.005, size=1)+
   scale_y_continuous(breaks=seq(30,280,10),lim=c(100,160))+ 
   ylab(expression(paste("Source level (dB re 1 ", mu, "Pa"^2,"/Hz @ 1m)")))+
   xlab("Frequency (Hz)")+
   theme_bw()+
   theme(panel.grid.major = element_line(colour="black", size=0.10),panel.grid.minor.y=element_line(color="black",size=0.05))+
-  scale_color_manual(values = c("Tanker" = "#1b9e77","Cargo" = "#d95f02","Fishing" = "#66a61e","Passenger" = "#7570b3", "Tug" = "#e6ab02","Pleasure craft" = "#e7298a"))
+  scale_color_manual(name = "Vessel class", values = c("Tanker" = "#1b9e77","Cargo" = "#d95f02","Fishing" = "#66a61e","Passenger" = "#7570b3", "Tug" = "#e6ab02","Pleasure craft" = "#e7298a"))
 
 ggsave("SL_vesseltype_fig.eps",SL_vessel_type_fig)
-ggsave("SL_vesseltype_fig.tiff",SL_vessel_type_fig, width = 6, height = 4, units = "in", dpi = 600)
+ggsave("/Users/swricci/Documents/gis714_geocomp/final_presentation/SL_vesseltype_fig.tiff",SL_vessel_type_fig, width = 6, height = 4, units = "in", dpi = 600)
 ```
 
 ```{r}
@@ -349,5 +354,48 @@ speed_profile<-ggplot(fknms_jul_speed)+
   theme_classic()
 
 ggsave("C:/Users/sbrown/Documents/research/fknms_july_speedprofile.tiff",speed_profile, width = 2, height = 3, dpi = 600)
+
+```
+
+```{r}
+library(ggplot2)
+library(data.table)
+library(dplyr)
+
+tracks2017<-fread(paste(getwd(),"/data/tracks2017.csv",sep=""))
+tracks2017[Length == 0, "Length"] <-NA 
+tracks2017<-tracks2017[,`:=`(month=format(as.Date(TrckStr, '%m/%d/%Y'),'%m'))]
+
+#vessel_types<-c("Not Available","Other","Cargo","Tanker","Tug Tow","Passenger","Fishing","Pleasure Craft/Sailing")
+# 
+# tracks2017.summary<-tracks2017[,.(count = .N, avg.length = mean(Length, na.rm=T), unique.vessels = length(unique(MMSI)), avg.speed = mean(SOG), median.speed  = median(SOG), avg.track.length = mean(Shp_Lng)), by="vssl_gr"]
+# 
+# tracks2017.summary.month<-tracks2017[,.(count = .N, avg.length = mean(Length, na.rm=T), unique.vessels = length(unique(MMSI)), avg.track.length = mean(Shp_Lng)), by=c("vssl_gr","month")]
+
+tracks2017.summary.filt<-tracks2017[Shape_Length >=0.0045,.(count = .N, avg.length = mean(Length, na.rm=T), unique.vessels = length(unique(MMSI)), avg.speed = mean(SOG), median.speed  = median(SOG), avg.track.length = mean(Shp_Lng)), by="month"]
+
+
+tracks2017.filt<-tracks2017[Shape_Length >=0.0045,]
+tracks2017.filt<-tracks2017.filt%>%
+  mutate(class = case_when(vssl_gr == "Cargo"  ~ "Cargo",
+                           vssl_gr == "Tanker"  ~ "Tanker",
+                           vssl_gr == "Passenger" ~ "Passenger",
+                           vssl_gr == "Tug Tow" ~ "Tug/Tow",
+                        vssl_gr == "Fishing" ~ "Fishing",
+                        vssl_gr == "Pleasure Craft/Sailing" ~ "Recreational",
+                        vssl_gr == "Other" | vssl_gr == "Not Available" ~ "Other"))
+
+vessel_order<-c("Tanker","Cargo","Passenger","Tug/Tow","Fishing","Recreational","Other")
+
+tracks2017.filt$class2<-factor(tracks2017.filt$class, levels = vessel_order)
+
+tracks.bar<-ggplot(tracks2017.filt)+
+  geom_bar(aes(x = month, fill = class2), position = "fill")+
+  scale_fill_manual(name = "Vessel Class", values = c("Tanker" = "#1b9e77","Cargo" = "#d95f02","Fishing" = "#66a61e","Passenger" = "#7570b3", "Tug/Tow" = "#e6ab02","Recreational" = "#e7298a", "Other" = "#a6761d"))+
+  scale_x_discrete(labels=c("01" = "Jan", "02" = "Feb","03" = "Mar", "04" = "Apr", "05" = "May","06" = "Jun", "07" = "Jul", "08" = "Aug", "09" = "Sep", "10" = "Oct","11" = "Nov", "12" = "Dec"))+
+  scale_y_continuous(name = "Proportion of tracks")+
+  theme_classic(base_size = 14)
+
+ggsave("/Users/swricci/Documents/gis714_geocomp/final_presentation/tracks_barchart.tiff",tracks.bar, width = 6, height = 4, dpi = 600)
 
 ```
