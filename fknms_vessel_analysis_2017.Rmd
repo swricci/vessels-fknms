@@ -410,3 +410,40 @@ tracks.bar<-ggplot(tracks2017.filt)+
 ggsave("/Users/swricci/Documents/gis714_geocomp/final_presentation/tracks_barchart.tiff",tracks.bar, width = 6, height = 4, dpi = 600)
 
 ```
+
+Function to read in visible sound levels raster and export raster with just cells greater than certain sound level threshold (90,120). Ran function on both SPL and SELcum rasters exported from dBSea.
+```{r}
+library(raster)
+
+exclusion.zones<-function(file,soundlevel,outname){
+  tmp.raster<-raster(file)
+  rcl<-matrix(c(0,soundlevel,NA,soundlevel,Inf,1),ncol=3,byrow=T)
+  tmp.raster<-reclassify(tmp.raster,rcl,filename=paste(substr(file,1,nchar(file)-16),outname,sep=""))
+}
+
+
+vislevels_SPL.filelist<-list.files("C:/Users/sbrown/Documents/dBSea_fknms/results", pattern=glob2rx("*vislevelsSPL*.asc$"), full.names = T)
+
+soundlevel<-120
+outname<-"ez120.asc"
+
+# soundlevel<-90
+# outname<-"ez90.asc"
+
+for(i in seq(1,length(vislevels_SPL.filelist),1)){
+  exclusion.zones(vislevels_SPL.filelist[i],soundlevel,outname)
+}
+  
+
+vislevels_SEL.filelist<-list.files("C:/Users/sbrown/Documents/dBSea_fknms/results", pattern=glob2rx("*vislevelsSEL*.asc$"), full.names = T)
+
+# soundlevel<-120
+# outname<-"ez120.asc"
+
+soundlevel<-90
+outname<-"ez90.asc"
+
+for(i in seq(1,length(vislevels_SEL.filelist),1)){
+  exclusion.zones(vislevels_SEL.filelist[i],soundlevel,outname)
+}
+```
