@@ -272,6 +272,17 @@ generate.tracks(file,4.6,3,output.name) #speed is vessel cat average
 
 ```
 
+Styles for Figures
+Colors:
+Tank: teal (#1b9e77)
+Cargo: orange (#d95f02)
+Fishing: green (#66a61e)
+Passenger: purple (#7570b3)
+Tug: yellow (#e6ab02)
+Pleasure Craft/Sailing: pink (#e7298a)
+Other: gray (#666666)
+
+
 Using R code provided by Veirs et al 2016, extract median source level spectra for the vessel catergories of interest for this study. Data downloaded from http://www.beamreach.org/data/staff-research/ship-noise/
 The following code produced: a csv file that was used to load source level information into dBSea noise propagation modeling software and a figure of the source level spectra for each vessel type (using code adapted from Veirs et al)
 ```{r, eval = F}
@@ -391,7 +402,7 @@ tracks2017.filt$class2<-factor(tracks2017.filt$class, levels = vessel_order)
 
 tracks.bar<-ggplot(tracks2017.filt)+
   geom_bar(aes(x = month, fill = class2), position = "fill")+
-  scale_fill_manual(name = "Vessel Class", values = c("Tanker" = "#1b9e77","Cargo" = "#d95f02","Fishing" = "#66a61e","Passenger" = "#7570b3", "Tug/Tow" = "#e6ab02","Recreational" = "#e7298a", "Other" = "#a6761d"))+
+  scale_fill_manual(name = "Vessel Class", values = c("Tanker" = "#1b9e77","Cargo" = "#d95f02","Fishing" = "#66a61e","Passenger" = "#7570b3", "Tug/Tow" = "#e6ab02","Recreational" = "#e7298a", "Other" = "#666666"))+
   scale_x_discrete(labels=c("01" = "Jan", "02" = "Feb","03" = "Mar", "04" = "Apr", "05" = "May","06" = "Jun", "07" = "Jul", "08" = "Aug", "09" = "Sep", "10" = "Oct","11" = "Nov", "12" = "Dec"))+
   scale_y_continuous(name = "Proportion of tracks")+
   theme_classic(base_size = 14)
