@@ -447,3 +447,20 @@ for(i in seq(1,length(vislevels_SEL.filelist),1)){
   exclusion.zones(vislevels_SEL.filelist[i],soundlevel,outname)
 }
 ```
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+zone.tracks<-fread("data/tracks_byFKNMSzone.csv")
+
+zone.tracks<-zone.tracks %>% 
+  gather(key = "class", value = "tracks",`Tanker`:`Other`)
+
+ggplot(zone.tracks)+
+  geom_bar(aes(x=key, y=tracks/total, fill = class), stat = "identity")+
+  scale_fill_manual(name = "Vessel Class", values = c("Tanker" = "#1b9e77","Cargo" = "#d95f02","Fishing" = "#66a61e","Passenger" = "#7570b3", "Tug/Tow" = "#e6ab02","Recreational" = "#e7298a", "Other" = "#666666"))+
+    geom_text(aes(x=key,y=1.05,label=total)) +
+  coord_flip()+
+  theme_classic()
+```
