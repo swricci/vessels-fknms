@@ -1,3 +1,7 @@
+# Florida Keys Vessel Noise Project
+## GIS 714: Geospatial Computation & Simulation
+### Author: S. Ricci
+
 This repository has code, a description of methods used for GUI - based
 software, and some associated data for the project, "Mapping underwater
 vessel noise propagation to assess acoustic impact of anthropogenic
