@@ -1,12 +1,35 @@
 ---
-title: "Vessel Traffic Data Analysis"
+title: "Mapping underwater vessel noise propagation to assess acoustic impact of anthropogenic noise in the Florida Keys National Marine Sanctuary"
 author: "Shannon Ricci"
-date: "3/21/2019"
+date: "5/2/2019"
 output: html_document
 ---
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(eval = F)
+```
 
-## Project Description
+This repository has code, a description of methods used for GUI - based software, and some associated data for the project, "Mapping underwater vessel noise propagation to assess acoustic impact of anthropogenic noise in the Florida Keys National Marine Sanctuary".
 
+##Workflow Summary:
+- retreive vessel traffic data from <https://marinecadastre.gov/ais/>
+- filter and add vessel codes **R**
+- create tracklines, select representative tracks **ArcPro**
+- generate tracks & source level spectra for dBSea **R**
+- run noise propagation models **dBSea**
+- analyze output rasters, create maps **ArcPro**
+
+##Software and Packages Used:
+**R**
+- Packages: data.table, sf, ggplot2, raster, dplyr, pracma, scales, tidyr
+
+**ArcPro ESRI**
+- [Track Builder Pro 1.0 Toolbox](https://marinecadastre.gov/ais/)
+
+**dBSea**
+- Trial of full version: <http://www.dbsea.co.uk/>
+
+## Project Abstract:
+Anthropogenic noise is increasing in the oceans and can have a variety of impacts on marine organisms ranging from physiological damage to an individual, to disruption of group communication. In some coastal systems, smaller recreational vessels used for fishing and diving trips are the dominant anthropogenic sound source. While there have been many studies looking at the impact of sounds from larger vessels on marine mammals, there is limited knowledge of sound impacts from smaller vessels on mammals, as well as fish and invertebrate species that inhabit these shallow coastal areas. The goal of this study was to predict the acoustic footprint of dominant vessel tracks within and around the Florida Keys National Marine Sanctuary (FKNMS). The potential influence and intensity of anthropogenic noise within protected areas of the FKNMS was investigated using dBSea, an acoustic propagation modeling software and AIS vessel traffic data. Predicted sound levels from larger vessels did not propagate into the sanctuaries studied, and smaller vessels, though underrepresented in the vessel traffic data, may have more of a local impact in the shallow water of the sanctuary system. These methods and predictions can be used with long-term passive acoustic monitoring and automatic identification system (AIS) vessel tracking data to establish guidelines to better protect the natural acoustic environment of the FKNMS.
 
 
 ## Vessel Traffic Data Preparation
@@ -65,14 +88,30 @@ write.csv(ais.zone17.nov2017,"ais_fknms_nov2017.csv")
 ais.zone17.dec2017<-fread(ais.filelist[12])
 ais.zone17.dec2017<-ais.zone17.dec2017[LAT %between% c(24.25,24.75) & LON %between% c(-82.75, -80.75),]
 write.csv(ais.zone17.dec2017,"ais_fknms_dec2017.csv")
-
 ```
 
+##Create Vessel Tracks from AIS point data in ArcPro
+The filtered csv files from above were brought into ArcPro and converted to a File Geodatabase using the AIS CSV to File Geodatabase tool from the Track Builder Pro 1.0 toolbox. Once the point feature classes were created, points for each month were converted to track lines using the AIS TrackBuilder tool within the same toolbox. 
+
+Input points: newly generated point feature classes, 
+
+ID Field: MMSI, 
+
+Date/Time Field: BaseDateTime. 
+
+Break track lines using: Maximum Time and Distance
+
+Maximum Time: 30 minutes
+
+Maximum Distance: 1 (mile)
+
+Fields to include as attributes: all fields
+
+
 ## Add Vessel Type based on Vessel Codes
-Was unable to use the join tool in Arc Pro to merge vessel codes with the vessel type description. After creating tracks from the point csv files in Arc Pro (using the Track Builder tool), the shape files for the track lines for each month were exported. In this next step, the shapefiles are loaded into R, and then vessel types are added to the shapefiles based on vessel code.
+After creating the tracklines, I was unable to use the join tool in Arc Pro to merge vessel codes with the vessel type description. After creating tracks from the point csv files in Arc Pro (using the Track Builder tool), the shape files for the track lines for each month were exported. In this next step, the shapefiles are loaded into R, and then vessel types are added to the shapefiles based on vessel code.
 
 ```{r process.tracks.func, warning=FALSE}
-
 process.tracks<-function(track.file,vessel.codes,output.name){
   tracks_tmp<-st_read(track.file)
   tracks_coded<-merge(tracks_tmp,vessel.codes,by.x="VesselType",by.y="vessel_code")
@@ -89,19 +128,14 @@ process.tracks<-function(track.file,vessel.codes,output.name){
   
   result<-list(tracks_summary=tracks_summary,tracks_unique=tracks_unique)
   return(result)
-
 }
-
 ```
 
 ```{r code.tracks, warning=FALSE}
 library(sf)
 library(data.table)
-library(ggplot2)
 
 vessel.codes<-fread("C:/Users/swbrown/Documents/vessel_noise_project/vessel_analysis/VesselTypeCodes2018.csv")
-
-#setwd("C:/Users/swbrown/Documents/vessel_noise_project/vessel_analysis/tracks_fknms_2017_coded")
 
 #jan2017
 track.file="C:/Users/swbrown/Documents/vessel_noise_project/vessel_analysis/tracks_fknms_2017/tracks_fknms_jan2017.shp"
@@ -162,11 +196,14 @@ tracks_nov2017<-process.tracks(track.file,vessel.codes,output.name)
 track.file="C:/Users/swbrown/Documents/vessel_noise_project/vessel_analysis/tracks_fknms_2017/tracks_fknms_dec2017.shp"
 output.name="tracks_dec2017c.shp"
 tracks_dec2017<-process.tracks(track.file,vessel.codes,output.name)
-
 ```
 
+##Create density maps, extract vessel tracks by class in high activity areas
+Density maps were created using the AIS Vessel Transit Counter tool within the Track Builder Pro 1.0 Toolbox. Inputs were the vessel tracks created from the AIS TrackBuilder tool, extent set to the extent of the bathymetry data, and cell size = 100m. The result was a raster that shows the number of vessel tracks that pass through each cell.
 
-Track lines from each vessel category that best represented areas of high activity for that vessel category were extracted. In ArcPro, points were generated along each of these track lines spaced 1 km apart. Those points were exported from ArcPro as csv files so that we can generate the time between each of those points based on average vessel speed. The following function accomplishes this task. The final output is a csv file with point position information (in UTM), the depth of that source point, time between the two points, and the number of sections. This is the format and data required to import a moving source line into dBSea.
+Track lines from each vessel category that best represented areas of high activity for that vessel category were extracted. In ArcPro, points were generated along each of these track lines spaced 1 km apart following the [Create point features along a line](https://pro.arcgis.com/en/pro-app/help/editing/create-point-features-along-a-line.htm) documentation. Those points for each trackline were exported from ArcPro as csv files so that we can generate the time between each of those points based on average vessel speed (in R). 
+
+The following function accomplishes this task. The final output is a csv file with point position information (in UTM), the depth of that source point, time between the two points, and the number of sections. This is the format and data required to import a moving source line into dBSea.
 ```{r generate.tracks.function}
 generate.tracks<-function(point.file,speed,draft,output.name){
   track.points<-fread(point.file)
@@ -192,9 +229,9 @@ generate.tracks<-function(point.file,speed,draft,output.name){
   
   write.csv(tmp.track,output.name,row.names = F, quote = F)
 }
-
 ```
 
+Use function to generate tracks for each representative vessel:
 ```{r generate.tracks}
 library(data.table)
 library(sf)
@@ -268,22 +305,11 @@ generate.tracks(file,4.32,5.1,output.name)
 file<-"C:/Users/sbrown/Documents/dBSea_fknms/tracks_dbsea/tug_kirstengrace.csv"
 output.name<-"C:/Users/sbrown/Documents/dBSea_fknms/tracks_dbsea/tug_kirstengrace_track.csv"
 generate.tracks(file,4.6,3,output.name) #speed is vessel cat average
-
-
 ```
 
-Styles for Figures
-Colors:
-Tank: teal (#1b9e77)
-Cargo: orange (#d95f02)
-Fishing: green (#66a61e)
-Passenger: purple (#7570b3)
-Tug: yellow (#e6ab02)
-Pleasure Craft/Sailing: pink (#e7298a)
-Other: gray (#666666)
+##Get sound spectra for dBSea
+Using R code provided by Veirs et al 2016, extract median source level spectra for the vessel catergories of interest for this study. Data downloaded from <http://www.beamreach.org/data/staff-research/ship-noise/>
 
-
-Using R code provided by Veirs et al 2016, extract median source level spectra for the vessel catergories of interest for this study. Data downloaded from http://www.beamreach.org/data/staff-research/ship-noise/
 The following code produced: a csv file that was used to load source level information into dBSea noise propagation modeling software and a figure of the source level spectra for each vessel type (using code adapted from Veirs et al)
 ```{r, eval = F}
 library(data.table)
@@ -325,10 +351,21 @@ pleasure_craft_octave<-interp1(pleasure_craft$fhz,pleasure_craft$q50.avg,fcenter
 
 vessel_type_SL_octave<-data.frame(pleasure_craft_octave,fishing_octave,passenger_octave,tanker_octave,cargo_octave,tug_octave)
 
-#vessel_type_SL<-t(vessel_type_SL_octave)
-#write.csv(vessel_type_SL_octave,file = "vessel_type_SL.csv",row.names = T, quote = F)
+write.csv(vessel_type_SL_octave,file = "vessel_type_SL.csv",row.names = T, quote = F)
+```
 
+Create figure that shows the spectra for each vessel class. Assign the same color for all figures for each vessel class.
 
+Styles for Figures
+Colors:
+Tank: teal (#1b9e77)
+Cargo: orange (#d95f02)
+Fishing: green (#66a61e)
+Passenger: purple (#7570b3)
+Tug: yellow (#e6ab02)
+Pleasure Craft/Sailing: pink (#e7298a)
+Other: gray (#666666)
+```{r}
 vessel_type_SL<-dt_vessel_SL[class == "Tug" | class == "Pleasure craft" | class == "Fishing" | class == "Passenger" | class == "Cargo" | class == "Fishing" | class == "Tanker", .(q50.avg = mean(q50)),by=c("class","fhz")]
 
 vessel_order<-c("Tanker","Cargo","Passenger","Tug","Fishing","Pleasure craft")
@@ -351,6 +388,8 @@ ggsave("SL_vesseltype_fig.eps",SL_vessel_type_fig)
 ggsave("/Users/swricci/Documents/gis714_geocomp/final_presentation/SL_vesseltype_fig.tiff",SL_vessel_type_fig, width = 6, height = 4, units = "in", dpi = 600)
 ```
 
+##Generate sound speed profile
+Sound speed profile data was calculated using decadal average temperature and salinity data from World Ocean Atlas. The resulting figure shows the change in sound speeed with depth.
 ```{r}
 #generate sound speed profile figure
 fknms_jul_speed<-fread("C:/Users/sbrown/Documents/research/fknms_july_speedprofile.csv")
@@ -368,6 +407,8 @@ ggsave("C:/Users/sbrown/Documents/research/fknms_july_speedprofile.tiff",speed_p
 
 ```
 
+##Generate vessel traffic summary figures
+This figure shows the proportion of the total vessels for each month for in each vessel class.
 ```{r}
 library(ggplot2)
 library(data.table)
@@ -376,12 +417,6 @@ library(dplyr)
 tracks2017<-fread(paste(getwd(),"/data/tracks2017.csv",sep=""))
 tracks2017[Length == 0, "Length"] <-NA 
 tracks2017<-tracks2017[,`:=`(month=format(as.Date(TrckStr, '%m/%d/%Y'),'%m'))]
-
-#vessel_types<-c("Not Available","Other","Cargo","Tanker","Tug Tow","Passenger","Fishing","Pleasure Craft/Sailing")
-# 
-# tracks2017.summary<-tracks2017[,.(count = .N, avg.length = mean(Length, na.rm=T), unique.vessels = length(unique(MMSI)), avg.speed = mean(SOG), median.speed  = median(SOG), avg.track.length = mean(Shp_Lng)), by="vssl_gr"]
-# 
-# tracks2017.summary.month<-tracks2017[,.(count = .N, avg.length = mean(Length, na.rm=T), unique.vessels = length(unique(MMSI)), avg.track.length = mean(Shp_Lng)), by=c("vssl_gr","month")]
 
 tracks2017.summary.filt<-tracks2017[Shape_Length >=0.0045,.(count = .N, avg.length = mean(Length, na.rm=T), unique.vessels = length(unique(MMSI)), avg.speed = mean(SOG), median.speed  = median(SOG), avg.track.length = mean(Shp_Lng)), by="month"]
 
@@ -411,43 +446,7 @@ ggsave("/Users/swricci/Documents/gis714_geocomp/final_presentation/tracks_barcha
 
 ```
 
-Function to read in visible sound levels raster and export raster with just cells greater than certain sound level threshold (90,120). Ran function on both SPL and SELcum rasters exported from dBSea.
-```{r}
-library(raster)
-
-exclusion.zones<-function(file,soundlevel,outname){
-  tmp.raster<-raster(file)
-  rcl<-matrix(c(0,soundlevel,NA,soundlevel,Inf,1),ncol=3,byrow=T)
-  tmp.raster<-reclassify(tmp.raster,rcl,filename=paste(substr(file,1,nchar(file)-16),outname,sep=""))
-}
-
-
-vislevels_SPL.filelist<-list.files("C:/Users/sbrown/Documents/dBSea_fknms/results", pattern=glob2rx("*vislevelsSPL*.asc$"), full.names = T)
-
-soundlevel<-120
-outname<-"ez120.asc"
-
-# soundlevel<-90
-# outname<-"ez90.asc"
-
-for(i in seq(1,length(vislevels_SPL.filelist),1)){
-  exclusion.zones(vislevels_SPL.filelist[i],soundlevel,outname)
-}
-  
-
-vislevels_SEL.filelist<-list.files("C:/Users/sbrown/Documents/dBSea_fknms/results", pattern=glob2rx("*vislevelsSEL*.asc$"), full.names = T)
-
-# soundlevel<-120
-# outname<-"ez120.asc"
-
-soundlevel<-90
-outname<-"ez90.asc"
-
-for(i in seq(1,length(vislevels_SEL.filelist),1)){
-  exclusion.zones(vislevels_SEL.filelist[i],soundlevel,outname)
-}
-```
-
+This figure not included in the final paper shows the proportion of vessel type by zone.
 ```{r}
 library(dplyr)
 library(tidyr)
@@ -464,3 +463,49 @@ ggplot(zone.tracks)+
   coord_flip()+
   theme_classic()
 ```
+
+##Noise propagation modeling in dBSea
+Setting up a project in dBSea
+
+1. **Set up overall project world.**  
+Load bathymetry: GMRTv3_6_20190408topo.asc  
+Tools -> swap heights and depths  
+Set up this scenario:  
+Calculation grid:  
+X points : 305  
+Y points: 95  
+Z depth points: 75  
+Source solution:  
+Radial slices: 100  
+Range points: 100  
+Click OK.
+
+2. **Set up scenario**  
+Name scenario, add additional scenarios, check solve, etc.
+
+3. **Frequencies and solvers**  
+Assessment bandwidth: Octave  
+Master spectrum frequencies: 31.5 Hz to 500 Hz  
+Single solver: Select dBSea PE: parabolic equation  
+Click Advanced solver options:   
+Set number of Pade’s terms to 5
+
+4. **Sound sources**  
+Check moving source, click Motion  
+CSV -> import, Click OK  
+Click Spectrum -> Add equipment -> expand Other -> Select vessel category-> Click OK  
+
+5. **Water properties**  
+Sound speed profile tab -> Select fknms_july from drop down menu  
+Temperature and salinity tab -> Click on edit tab -> Select fknms july average from drop down menu
+
+6. **Seafloor properties**  
+Keep default: Layer Sand 0m
+
+7. **Save project.**
+
+8. **Hit solve (play button)**
+
+9. **Save project**  
+Open in dBSea Basic.  
+Export currently visible levels in ESRI Ascii grid format.
