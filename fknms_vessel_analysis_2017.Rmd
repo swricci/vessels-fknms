@@ -2,7 +2,7 @@
 title: "Mapping underwater vessel noise propagation to assess acoustic impact of anthropogenic noise in the Florida Keys National Marine Sanctuary"
 author: "Shannon Ricci"
 date: "5/2/2019"
-output: html_document
+output: md_document
 ---
 ```{r global_options, include=FALSE}
 knitr::opts_chunk$set(eval = F)
