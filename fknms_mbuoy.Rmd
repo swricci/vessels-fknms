@@ -66,3 +66,152 @@ scale_y_continuous(breaks=seq(30,280,10),lim=c(100,160))+
   scale_color_manual(values = c("q50.avg" = "black","q95.avg" = "red"))
 
 ```
+
+```{r}
+library(data.table)
+library(tidyr)
+library(ggplot2)
+
+
+speed_profile <- fread("C:/Users/sbrown/Documents/research/speedprofiles.csv")
+
+speed_profile<-speed_profile  %>%
+  gather(key = "time", value = "soundspeed",`annual`:`july`)
+
+ggplot(speed_profile)+
+  geom_line(aes(x = soundspeed, y = depth, group = time, color = time),size = 1)+
+  scale_y_reverse()+
+  scale_x_continuous(breaks = seq(1480,1540,10),position = "top")+
+  theme_classic()
+
+
+```
+
+```{r generate.tracks.function}
+generate.tracks<-function(point.file,speed,draft,output.name){
+  track.points<-fread(point.file)
+  track.points<-st_as_sf(track.points,coords = c('POINT_X','POINT_Y'), crs= "+init=epsg:32617")
+  
+  point.dist<-rep(NA,length(track.points$OBJECTID))
+  for (i in seq(from=1, to=length(track.points$OBJECTID)-1,by= 1)){
+    point.dist[i+1]<-st_distance(track.points[i+1,],track.points[i,])
+  }
+  point.dist[1]<-0
+  
+  point.time<-rep(NA,length(track.points$OBJECTID))
+  for (i in seq(from=1, to=length(track.points$OBJECTID)-1,by= 1)){
+    point.time[i+1]<-point.dist[i+1]/speed
+  }
+  point.time[1]<-0
+  
+  depth<-rep(draft,length(point.dist))
+  sections<-rep(0,length(point.dist))
+  
+  tmp.track<-data.table(st_coordinates(track.points),depth,point.time,sections)
+  colnames(tmp.track)<-c("Easting","Northing","Depth","Time","Sections")
+  
+  write.csv(tmp.track,output.name,row.names = F, quote = F)
+}
+```
+
+Use function to generate tracks for each representative vessel:
+```{r generate.tracks}
+library(data.table)
+library(sf)
+
+#set vessel specific parameters:
+# speed <- #in m/s
+# draft <- #in m
+# output.name<- #path with .csv file name
+
+#WDR
+#neverland
+file<-"C:/Users/sbrown/Documents/dBSea_mbuoy/track_points/wdr_neverland_points.csv"
+output.name<-"C:/Users/sbrown/Documents/dBSea_mbuoy/tracks_dbsea/wdr_neverland.csv"
+generate.tracks(file,5.35,1,output.name) #speed is recreational average
+
+file<-"C:/Users/sbrown/Documents/dBSea_mbuoy/track_points/wdr_familytime_points.csv"
+output.name<-"C:/Users/sbrown/Documents/dBSea_mbuoy/tracks_dbsea/wdr_familytime.csv"
+generate.tracks(file,5.35,1,output.name) #speed is recreational cat average
+
+#SK
+#godspeed
+file<-"C:/Users/sbrown/Documents/dBSea_mbuoy/track_points/sk_godspeed_points.csv"
+output.name<-"C:/Users/sbrown/Documents/dBSea_mbuoy/tracks_dbsea/sk_godspeed.csv"
+generate.tracks(file,5.35,1,output.name) #speed is recreational cat average
+
+#marianne
+file<-"C:/Users/sbrown/Documents/dBSea_mbuoy/track_points/sk_marianne_points.csv"
+output.name<-"C:/Users/sbrown/Documents/dBSea_mbuoy/tracks_dbsea/sk_marianne.csv"
+generate.tracks(file,5.35,1,output.name) #speed is recreational cat average
+
+#orion
+file<-"C:/Users/sbrown/Documents/dBSea_mbuoy/track_points/sk_orion_points.csv"
+output.name<-"C:/Users/sbrown/Documents/dBSea_mbuoy/tracks_dbsea/sk_orion.csv"
+generate.tracks(file,5.35,1,output.name) #speed is recreational cat average
+
+#NFS
+#neverland
+file<-"C:/Users/sbrown/Documents/dBSea_mbuoy/track_points/nfs_neverland_points.csv"
+output.name<-"C:/Users/sbrown/Documents/dBSea_mbuoy/tracks_dbsea/nfs_neverland.csv"
+generate.tracks(file,5.35,1,output.name) #speed is recreational average
+
+#wheel estate
+file<-"C:/Users/sbrown/Documents/dBSea_mbuoy/track_points/nfs_wheelestate_points.csv"
+output.name<-"C:/Users/sbrown/Documents/dBSea_mbuoy/tracks_dbsea/nfs_wheelestate.csv"
+generate.tracks(file,5.35,1,output.name) #speed is recreational average
+
+#WSB
+#flying fish
+file<-"C:/Users/sbrown/Documents/dBSea_mbuoy/track_points/wsb_flyingfish_points.csv"
+output.name<-"C:/Users/sbrown/Documents/dBSea_mbuoy/tracks_dbsea/wsb_flyingfish.csv"
+generate.tracks(file,5.35,1,output.name) #speed is recreational average
+
+#gratitude
+file<-"C:/Users/sbrown/Documents/dBSea_mbuoy/track_points/wsb_gratitude_points.csv"
+output.name<-"C:/Users/sbrown/Documents/dBSea_mbuoy/tracks_dbsea/wsb_gratitude.csv"
+generate.tracks(file,5.35,1,output.name) #speed is recreational average
+
+#neverland
+file<-"C:/Users/sbrown/Documents/dBSea_mbuoy/track_points/wsb_neverland_points.csv"
+output.name<-"C:/Users/sbrown/Documents/dBSea_mbuoy/tracks_dbsea/wsb_neverland.csv"
+generate.tracks(file,5.35,1,output.name) #speed is recreational average
+
+#osprey moon
+file<-"C:/Users/sbrown/Documents/dBSea_mbuoy/track_points/wsb_ospreymoon_points.csv"
+output.name<-"C:/Users/sbrown/Documents/dBSea_mbuoy/tracks_dbsea/wsb_ospreymoon.csv"
+generate.tracks(file,5.35,1,output.name) #speed is recreational average
+
+#LKSPA
+#ospreymoon
+file<-"C:/Users/sbrown/Documents/dBSea_mbuoy/track_points/lkspa_ospreymoon_points.csv"
+output.name<-"C:/Users/sbrown/Documents/dBSea_mbuoy/tracks_dbsea/lkspa_ospreymoon.csv"
+generate.tracks(file,5.35,1,output.name) #speed is recreational average
+
+#flyingcolors
+file<-"C:/Users/sbrown/Documents/dBSea_mbuoy/track_points/lkspa_flyingcolors_points.csv"
+output.name<-"C:/Users/sbrown/Documents/dBSea_mbuoy/tracks_dbsea/lkspa_flyingcolors.csv"
+generate.tracks(file,5.35,1,output.name) #speed is recreational average
+
+#questeria
+file<-"C:/Users/sbrown/Documents/dBSea_mbuoy/track_points/lkspa_questeria_points.csv"
+output.name<-"C:/Users/sbrown/Documents/dBSea_mbuoy/tracks_dbsea/lkspa_questeria.csv"
+generate.tracks(file,5.35,1,output.name) #speed is recreational average
+
+#SOM
+#kathrynann
+file<-"C:/Users/sbrown/Documents/dBSea_mbuoy/track_points/som_kathrynann_points.csv"
+output.name<-"C:/Users/sbrown/Documents/dBSea_mbuoy/tracks_dbsea/som_kathrynann.csv"
+generate.tracks(file,5.35,1,output.name) #speed is recreational average
+
+#bandulu
+file<-"C:/Users/sbrown/Documents/dBSea_mbuoy/track_points/som_bandulu_points.csv"
+output.name<-"C:/Users/sbrown/Documents/dBSea_mbuoy/tracks_dbsea/som_bandulu.csv"
+generate.tracks(file,5.35,1,output.name) #speed is recreational average
+
+#elizabear
+file<-"C:/Users/sbrown/Documents/dBSea_mbuoy/track_points/som_elizabear_points.csv"
+output.name<-"C:/Users/sbrown/Documents/dBSea_mbuoy/tracks_dbsea/som_elizabear.csv"
+generate.tracks(file,5.35,1,output.name) #speed is recreational average
+
+```
