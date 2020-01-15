@@ -7,6 +7,8 @@ software, and some associated data for the project, "Mapping underwater
 vessel noise propagation to assess acoustic impact of anthropogenic
 noise in the Florida Keys National Marine Sanctuary".
 
+Noise propagation visualization: https://swricci.github.io/vessels-mapbox/
+
 Workflow Summary:
 -----------------
 
